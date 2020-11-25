@@ -1,0 +1,119 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+
+use('test-db');
+//db.linkedon.find({});
+//ex1
+//db.linkedon.count({salary: {$gt: 25000}});
+
+
+//ex2
+//db.linkedon.find({},{_id:0, firstName: true, salary: true}).sort({salary: -1}).limit(3);
+
+
+//ex3
+//db.linkedon.find( { $and: [ { "currentCompany.name": "Walmart" }, { salary: { $gte: 7000 } } ] } ).count()
+//output only their names: db.linkedon.find({}, {_id:0, firstName: true}, { $and: [ { "currentCompany.name": "Walmart" }, { salary: { $gte: 7000 } } ] } )
+
+
+//ex4
+//we must return: "currentCompany.name" firstName lastName salary
+//db.linkedon.find({},{_id:0, firstName: true, lastName:true, salary: true, "currentCompany.name": true}).sort({salary: -1}).limit(1);
+
+//ex5
+//we must count "previousCompanies" and "currentCompany.name"
+// db.linkedon.count(
+//     { $or:
+//     [ {"currentCompany.name": "Apple"},
+//       {"previousCompanies.name": "Apple"}
+//     ]});
+
+
+//ex6 (extension1)
+//we must count each currentCompany.industry for currentCompany.name=Apple
+// const aggregation = [
+//   { $match: { "currentCompany.name": "Apple" } },
+//   { $group: { _id: "$currentCompany.industry" , "count": { $sum:1 } } }
+// ];
+// db.linkedon.aggregate(aggregation);
+
+
+//ex7 (extension2)
+//then: Find the total (sum) of salaries per company for Analysts ("currentPosition": "Analyst")
+//then: Find the number of people working at each company
+//then: Divide the total salary by the number of people
+// const aggregation = [
+//   { $match: { currentPosition: "Analyst" } },
+//   { $group: { _id: "$currentCompany.name" , "averageSalary": {$avg: "$salary"} } }
+// ];
+// db.linkedon.aggregate(aggregation);
+
+
+//ex8 (extension3)
+//"currentCompany.industry":"Tech"
+const aggregation =
+[
+    {
+        $match:
+        {
+            $and:
+            [
+                {
+                    $or:
+                    [
+                        {"currentCompany.name": "Google"},
+                        {"currentCompany.name": "Apple"}
+                    ]
+                },
+                {
+                    "currentCompany.industry": "Tech"
+                }
+            ]
+        }
+    },
+    {
+        $group:
+        {
+            _id: "$lastName",
+            "averageSalary": {$avg: "$salary"}
+        }
+    },
+    {
+        $sort:
+        {
+            "averageSalary": -1
+        }
+    }
+];
+db.linkedon.aggregate(aggregation);
+
+
+
+
+
+
+// The drop() command destroys all data from a collection.
+// // Make sure you run it against proper database and collection.
+// db.sales.drop();
+
+// // Insert a few documents into the sales collection.
+// db.sales.insertMany([
+//   { '_id' : 1, 'item' : 'abc', 'price' : 10, 'quantity' : 2, 'date' : new Date('2014-03-01T08:00:00Z') },
+//   { '_id' : 2, 'item' : 'jkl', 'price' : 20, 'quantity' : 1, 'date' : new Date('2014-03-01T09:00:00Z') },
+//   { '_id' : 3, 'item' : 'xyz', 'price' : 5, 'quantity' : 10, 'date' : new Date('2014-03-15T09:00:00Z') },
+//   { '_id' : 4, 'item' : 'xyz', 'price' : 5, 'quantity' :  20, 'date' : new Date('2014-04-04T11:21:39.736Z') },
+//   { '_id' : 5, 'item' : 'abc', 'price' : 10, 'quantity' : 10, 'date' : new Date('2014-04-04T21:23:13.331Z') },
+//   { '_id' : 6, 'item' : 'def', 'price' : 7.5, 'quantity': 5, 'date' : new Date('2015-06-04T05:08:13Z') },
+//   { '_id' : 7, 'item' : 'def', 'price' : 7.5, 'quantity': 10, 'date' : new Date('2015-09-10T08:43:00Z') },
+//   { '_id' : 8, 'item' : 'abc', 'price' : 10, 'quantity' : 5, 'date' : new Date('2016-02-06T20:20:13Z') },
+// ]);
+
+// // Run a find command to view items sold on April 4th, 2014.
+// db.sales.find({ date: { $gte: new Date('2014-04-04'), $lt: new Date('2014-04-05') } });
+
+// // Run an aggregation to view total sales for each product in 2014.
+// const aggregation = [
+//   { $match: { date: { $gte: new Date('2014-01-01'), $lt: new Date('2015-01-01') } } },
+//   { $group: { _id : '$item', totalSaleAmount: { $sum: { $multiply: [ '$price', '$quantity' ] } } } }
+// ];
+// db.sales.aggregate(aggregation);
